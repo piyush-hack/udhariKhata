@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saman Receipt </title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.8.1/html2pdf.bundle.min.js"
+        integrity="sha512-vDKWohFHe2vkVWXHp3tKvIxxXg0pJxeid5eo+UjdjME3DBFBn2F8yWOE0XmiFcFbXxrEOR1JriWEno5Ckpn15A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100&family=Ubuntu&display=swap');
+
+        * {
+            font-family: 'Roboto Mono', monospace;
+            font-family: 'Ubuntu', sans-serif;
+        }
+
+        .invoice-container {
+            box-sizing: border-box;
+            margin: 6rem auto 0;
+            max-width: 800px;
+            border: 1px solid #aaa;
+            padding: 2rem;
+            box-shadow: 5px 10px #888888;
+        }
+
+        .invoice {
+            background: white;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        *,
+        *:before,
+        *:after {
+            box-sizing: inherit;
+        }
+
+        [contenteditable]:hover,
+        input:hover,
+        [contenteditable]:focus,
+        input:focus {
+            background: rgba(23, 162, 184, 0.1);
+            outline: 2px solid #17a2b8;
+        }
+
+        .group:after,
+        .invoicelist-footer:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        a {
+            color: #17a2b8;
+            text-decoration: none;
+        }
+
+        p {
+            margin: 0;
+        }
+
+        .control-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: #17a2b8;
+            color: white;
+            line-height: 4rem;
+            height: 4rem;
+        }
+
+        .control-bar .slogan {
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: inline-block;
+            margin-right: 2rem;
+        }
+
+        .control-bar label {
+            margin-right: 1rem;
+        }
+
+        .control-bar a {
+            margin: 0;
+            padding: 0.5em 1em;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .control-bar a:hover {
+            background: white;
+        }
+
+        .control-bar input {
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 0;
+            max-width: 30px;
+            text-align: center;
+        }
+
+        .control-bar input:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        header {
+            margin: 1rem 0 0;
+            padding: 0 0 2rem 0;
+            border-bottom: 3pt solid #17a2b8;
+        }
+
+        header p {
+            font-size: 0.9rem;
+        }
+
+        header a {
+            color: #000;
+        }
+
+        .money::before {
+            content: "₹";
+        }
+
+        .info {
+            width: 30%;
+        }
+
+        .section {
+            margin: 3rem 0 0;
+        }
+
+        .smallme {
+            display: inline-block;
+            text-transform: uppercase;
+            margin: 0 0 2rem 0;
+            font-size: 0.9rem;
+        }
+
+        .client {
+            margin: 0 0 3rem 0;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 0;
+            font-size: 2rem;
+            color: #17a2b8;
+        }
+
+        .details input {
+            display: inline;
+            margin: 0 0 0 0.5rem;
+            border: none;
+            width: 50px;
+            min-width: 0;
+            background: transparent;
+            text-align: left;
+        }
+
+        /**
+ * INVOICELIST BODY
+ */
+        .invoicelist-body {
+            margin: 1rem;
+        }
+
+        .invoicelist-body table {
+            width: 100%;
+        }
+
+        .invoicelist-body thead {
+            text-align: left;
+            border-bottom: 2pt solid #666;
+        }
+
+        .invoicelist-body td,
+        .invoicelist-body th {
+            position: relative;
+            padding: 1rem;
+        }
+
+        .invoicelist-body tr:nth-child(even) {
+            background: #ccc;
+        }
+
+        .invoicelist-body tr:hover .removeRow {
+            display: block;
+            position: relative;
+            z-index: 20;
+            padding: 5px;
+            text-align: center;
+            text-decoration: none;
+            float: left;
+            border: none;
+        }
+
+        .invoicelist-body input {
+            display: inline;
+            margin: 0;
+            border: none;
+            width: 80%;
+            min-width: 0;
+            background: transparent;
+            text-align: left;
+        }
+
+        .invoicelist-body .control {
+            color: white;
+            background: #17a2b8;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .invoicelist-body .control:hover {
+            background: #1ab6cf;
+        }
+
+        .invoicelist-body .newRow {
+            float: left;
+            padding: 5px;
+        }
+
+        .invoicelist-body .removeRow {
+            display: none;
+            position: absolute;
+            left: -1rem;
+            font-size: 0.5rem;
+            border-radius: 10px;
+            padding: 0.5rem;
+            background-size: 0 100%;
+        }
+        .invoicelist-body{
+            overflow-x: scroll;
+        }
+
+        /**
+ * INVOICE LIST FOOTER
+ */
+        .invoicelist-footer {
+            margin: 1rem;
+        }
+
+        .invoicelist-footer table {
+            float: right;
+            width: 40%;
+        }
+
+
+        .invoicelist-footer table td {
+
+            padding: 0.5rem 4rem 0 1rem;
+            text-align: right;
+        }
+
+        /**
+ * NOTE
+ */
+        .note {
+            margin: 1rem;
+        }
+
+        .hidenote .note {
+            display: none;
+        }
+
+        .note h2 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        /************
+ * FOOTER
+ **/
+        .invoice footer {
+            display: block;
+            margin: 1rem 0;
+            padding: 1rem 0 0;
+        }
+
+        .invoice footer p {
+            font-size: 0.8rem;
+        }
+
+        .ph {
+            padding: 5px;
+        }
+
+        .ph table tr td {
+            text-align: center;
+            padding: 5px;
+            border: dotted;
+        }
+        
+        table{
+            overflow-x : scroll;
+        }
+
+        /**
+ * PRINT STYLE
+ */
+        @media print {
+            html {
+                margin: 0;
+                padding: 0;
+                background: #fff;
+            }
+
+            body,
+            .invoice {
+                width: 100%;
+                border: none;
+                background: #fff;
+                margin: auto;
+                padding: 0;
+            }
+
+            .control,
+            .control-bar,
+            .alert {
+                display: none !important;
+            }
+
+            [contenteditable]:hover,
+            [contenteditable]:focus {
+                outline: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+            <div style="
+            position: fixed;
+            background-color: #007BFF;
+            color: white;
+            padding: 5px;
+            border-top-left-radius: 5px;
+            bottom: 0;
+            right: 0;
+            z-index: 99999999;
+            width: 230px;
+            text-align: center;
+        "><a href="/index.html" style="text-decoration : none;color: #fff;">Udhari Khata</a>    </div>
+    <div class="invoice-container" id="receipt">
+        <div class="control-bar">
+
+            <div class="container">
+                <div class="row">
+                    <div class="col-10">
+                        <div class="slogan">Receipt By Address</div>
+                    </div>
+
+
+                    <div class="col-2 text-right">
+                        <a href="javascript:window.print()">Print</a>
+                        <button id='answer-example-share-button'>Share!</button>
+                        <a id="dr">Download</a>
+
+
+                    </div>
+                    <!--.col-->
+                </div>
+                <!--.row-->
+            </div>
+            <!--.container-->
+        </div>
+        <!--.control-bar-->
+        <class="invoice" id="invoice">
+            <div class="row">
+                <!-- <div class="col-12 alert alert-info">Dynamic Receipts allows you to easier invoice your customer. <br>
+                    IMPORTANT: Changes to your receipt will not be saved. Print before leaving.</div> -->
+                <div class="col-6" contenteditable>
+                    <p>
+                        <strong>Rahul Mobile And Electronics</strong><br>
+                        Bada Bazaar, near Ansari Medical Store <br>
+                        Shikarpur , Bulandshahr U.P.
+                    </p>
+                </div>
+                <!--.col-->
+                <div class="info col-6">
+                    <p contenteditable>
+                        Mail: <a href="mailto:rahulelectronicsg@gmail.com">rahulelectronicsg@gmail.com</a><br>
+                        Tel: (+91) 7533946254
+                    </p>
+                </div>
+                <br>
+                <div class="col-12 p-5" contenteditable>
+                    
+                    <h1> Rahul Mobile And Electronics || Order Recipt
+                </div>
+            </div>
+
+
+            <div class="row section">
+
+                <div class="col-6">
+
+                    <p contenteditable class="client">
+                        <strong >Customer Name</strong><br>
+                        Billing Address<br>
+                        Shikarpur , Bulandshahr 202395
+                    </p>
+                </div>
+                <!--.col-->
+
+                <div class="col-6 text-left details">
+                    <p contenteditable>
+                        Dates: <span id="ddate"></span> - Present<br>
+                        Order: <span id="dorder"></span><br>
+                    </p>
+                </div>
+                <!--.col-->
+
+            </div>
+            <!--.row-->
+            <hr>
+            <h4 contenteditable>Itemized Order Breakdown</h4>
+
+            <div class="invoicelist-body table-responsive">
+                <table class="table" id="mt" contenteditable>
+                    <thead>
+                        <th>Product</th>
+
+                        <th>Type</th>
+                        <th>Dates</th>
+                        <th>Cost</th>
+                        <th>Extra</th>
+                        <th>Discount</th>
+                        <th>Total</th>
+                    </thead>
+                    <tbody>
+                        <!-- <tr class="line-item">
+                            <td id="product_info"><a class="control removeRow" href="#" contenteditable=false>x</a>
+                            </td>
+                            <td id="item_type">Rental</td>
+                            <td id="date_info">3/15/20 - 5/10/20</td>
+                            <td class="line-cost line-sub money">320.00</td>
+                            <td class="line-cost line-dw money">13.16</td>
+                            <td class="line-cost line-discount money">32.90</td>
+                            <td class="line-total money" contenteditable=false></td>
+                        </tr> -->
+                        <!-- <tr class="line-item">
+                            <td id="product_info"><a class="control removeRow" href="#">x</a>Rug 8.5 x 11 Traditional
+                            </td>
+                            <td id="item_type">Rental</td>
+                            <td id="date_info">3/15/20 - 5/10/20</td>
+                            <td class="line-cost line-sub money">200.00</td>
+                            <td class="line-cost line-dw money">8.00</td>
+                            <td class="line-cost line-discount money">20.00</td>
+                            <td class="line-total money" contenteditable=false></td>
+                        </tr>
+                        <tr class="line-item">
+                            <td id="product_info"><a class="control removeRow" href="#">x</a>Delivery</td>
+                            <td id="item_type">Rental</td>
+                            <td id="date_info">3/15/20</td>
+                            <td class="line-cost line-sub money">169.00</td>
+                            <td class="line-cost line-dw money"> -</td>
+                            <td class="line-cost line-discount money">16.90</td>
+                            <td class="line-total money" contenteditable=false></td>
+                        </tr>
+                        <tr class="line-item">
+                            <td id="product_info"><a class="control removeRow" href="#">x</a>Destage</td>
+                            <td id="item_type">Rental</td>
+                            <td id="date_info">5/10/20</td>
+                            <td class="line-cost line-sub money">169.00</td>
+                            <td class="line-cost line-dw money"> -</td>
+                            <td class="line-cost line-discount money">16.90</td>
+                            <td class="line-total money" contenteditable=false></td>
+                        </tr> -->
+
+                    </tbody>
+                </table>
+                <a class="control newRow" id="addrow" href="#">+ New ROW</a>
+            </div>
+            <!--.invoice-body-->
+
+            <div class="invoicelist-footer">
+                <table>
+                    <tr>
+                        <td>Subtotal</td>
+                        <td class="full-subtotal money"></td>
+                    </tr>
+                    <tr>
+                        <td>Discount</td>
+                        <td class="full-tax money"></td>
+                    </tr>
+                    <tr>
+                        <td>Extra Charges</td>
+                        <td class="full-dw money"></td>
+                    </tr>
+                    <td>Total</td>
+                    <td class="total-price money" id="total_owed"></td>
+                    </tr>
+                </table>
+            </div>
+            <hr>
+            <h4 contenteditable>Payment History</h4>
+            <div class="table-responsive ph">
+                <table class="table" contenteditable>
+                    <thead>
+                        <th>Dates</th>
+                        <th>Payment Type</th>
+                        <th>Amount</th>
+
+                    </thead>
+                    <tbody>
+                        <tr class="line-item">
+                            <td id="ph-date"></td>
+                            <td id="ph-details">Cash</td>
+                            <td class="paid-amount money" id="ph-money">320.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="invoicelist-footer">
+                <table>
+                    <tr>
+                        <td>Total Paid</td>
+                        <td class="money total-paid" id="total_paid" contenteditable>0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Balance Due</td>
+                        <td class="money" id="balance_due">0.00</td>
+                    </tr>
+                </table>
+            </div>
+            <!--.invoice-body-->
+
+            <div class="note" contenteditable>
+                <h2><strong>Thank you!</strong></h2>
+                <small>
+                    <p>We appreciate your business! Please let us know if you have any questions/concerns about your
+                        bill <a href="mailto:rahulelectronicsg@gmail.com" target="_blank">rahulelectronicsg@gmail.com</a> or call us
+                        at
+                        (+91) 7823343733</p>
+                    <p>
+                        ** For every order, the first 30 days are billed and non-refundable, to meet a 30-day minimum
+                        rental. Items are prorated by the day
+                        after the first 30 days. The rental will be renewed on Day 37 for 7 days and continue to renew
+                        every 7 days after that. If the items
+                        are returned before the 7-day renewal, you will only be charged for the days you used.
+                    </p>
+                    <p>
+                        RETURNING YOUR ORDER: For every day the items are renting, we pay the furniture owner on your
+                        behalf. Rental fees continue until
+                        the items are scanned back into the fulfillment center and available for the owner or others to
+                        use, so please place your delivery
+                        request 7 days in advance, whenever possible. To get in the SDN Destage or Will Call Drop-Off
+                        queue: SEND REQUEST of
+                        the appointment time to <a href="mailto:rahulelectronicsg@gmail.com"
+                            target="_blank"> rahulelectronicsg@gmail.com</a>.
+                    </p>
+                    <p>
+                        We provide a 7 day grace period at the front end of your rental as you are building your order
+                        to offset some of the delivery
+                        service availability. We also try to minimize your expenses by not requiring a flat two or
+                        three-month minimum.
+                    </p>
+                    <hr>
+                    <small>
+                        <p><strong><sup>1</sup> <em>Returned Date</em></strong> is when a product was destaged and
+                            returned to SDN.</p>
+                        <p><strong><sup>2</sup> <em>Hold Dates</em></strong> are the days that a product was held over
+                            its grace period (7 days) before being delivered. This is to prevent customers from holding
+                            items for extended periods of time on open orders. How it's calculated: [delivery date] -
+                            ([date product added to order] + [7 grace period days])</p>
+                        <p><strong><sup>3</sup> <em>Blackout Dates</em></strong> are days that are exempt from billing.
+                            They're subtracted from the product's rent.</p>
+                    </small>
+                </small>
+                </p>
+            </div>
+
+            <footer class="row">
+                <div class="col-12 text-center">
+                    <p class="notaxrelated" contenteditable>Rahul Mobile And Electronics | rahulelectronicsg@gmail.com | (+91) 7533946254
+                    </p>
+                </div>
+            </footer>
+    </div>
+    </div>
+    </div>
+    <script>
+
+        document.getElementById("dr").onclick = async function () {
+            var options = {
+                margin: 1,
+                filename: 'isolates.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            document.getElementById("addrow").innerHTML = "<br><br>"
+            document.getElementById("addrow").style.width = "0px"
+            var pdf_content = document.getElementById("invoice");
+            setInterval(() => {
+                document.getElementById("addrow").innerHTML = "+ Add ROW";
+                document.getElementById("addrow").style.minWidth = "100px";
+
+            }, 2000);            
+
+            
+            html2pdf(pdf_content, options);
+
+
+        }
+
+
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+        var yyyy = today.getFullYear();
+
+        today = dd + '/' + mm + '/' + yyyy;
+
+        document.getElementById("ph-date").innerHTML = today;
+        document.getElementById("ddate").innerHTML = today;
+
+        var newRow = `<tr class="line-item"><td id="product_info" class="product_info" contenteditable=false><a class="control removeRow" href="#" contenteditable=false>x</a><span contenteditable >Product</span></td><td id="item_type">Phone</td> <td id="date_info">${today}</td><td class="line-cost line-sub money">0.00</td><td class="line-cost line-dw money">0.00</td><td class="line-cost line-discount money">0.00</td><td class="line-total money" contenteditable=false>0.00</td></tr>`;
+
+        $('.invoicelist-body tbody').append(newRow);
+
+        $('.newRow').on('click', function (e) {
+            $('.invoicelist-body tbody').append(newRow);
+            e.preventDefault();
+        });
+
+        $('body').on('click', '.removeRow', function (e) {
+            $(this).closest('tr').remove();
+            e.preventDefault();
+        });
+
+
+
+        function calculate_lines() {
+            $('tr').each(function () {
+                var sum = 0;
+                $(this).find('.line-cost').each(function () {
+                    var line_item = $(this).text();
+                    if (!isNaN(line_item) && line_item.length !== 0 && !($(this).hasClass("line-discount"))) {
+                        sum += parseFloat(line_item);
+                    }
+
+                    if(!isNaN(line_item) && line_item.length !== 0 && ($(this).hasClass("line-discount"))){
+                        sum -= parseFloat(line_item);
+                    }
+                });
+                $(this).find('.line-total').html(sum.toFixed(2));
+            });
+        }
+
+
+        function calculate_sub() {
+            var sum = 0;
+            $('tr').find('.line-sub').each(function () {
+                var line_sub = $(this).text();
+                if (!isNaN(line_sub) && line_sub.length !== 0) {
+                    sum += parseFloat(line_sub);
+                }
+            });
+
+            $('.full-subtotal').html(sum.toFixed(2));
+
+        }
+
+
+
+        function calculate_dw() {
+            var sum = 0;
+            $('tr').find('.line-dw').each(function () {
+                var line_dw = $(this).text();
+                if (!isNaN(line_dw) && line_dw.length !== 0) {
+                    sum += parseFloat(line_dw);
+                }
+            });
+            $('.full-dw').html(sum.toFixed(2));
+
+        }
+
+
+
+        function calculate_tax() {
+            var sum = 0;
+            $('tr').find('.line-discount').each(function () {
+                var line_tax = $(this).text();
+                if (!isNaN(line_tax) && line_tax.length !== 0) {
+                    sum -= parseFloat(line_tax);
+                }
+            });
+            $('.full-tax').html(sum.toFixed(2));
+        }
+
+        function calculate_total() {
+            var sum = 0;
+            $('tr').find('.line-total').each(function () {
+                var line_total = $(this).text();
+                if (!isNaN(line_total) && line_total.length !== 0) {
+                    sum += parseFloat(line_total);
+                }
+            });
+
+            $('.total-price').html(sum.toFixed(2));
+            $('#ph-money').html(sum.toFixed(2));
+
+        }
+
+
+        function paid_total() {
+            var sum = 0;
+            $('tr').find('.paid-amount').each(function () {
+                var paid_amount = $(this).text();
+                if (!isNaN(paid_amount) && paid_amount.length !== 0) {
+                    sum += parseFloat(paid_amount);
+                }
+            });
+
+            // $('.total-paid').html(sum.toFixed(2));
+
+        }
+
+        function total_due_to_sdn() {
+            var amount_due = parseFloat($('#total_owed').text());
+            var total_paid = parseFloat($('#total_paid').text());
+            var balance = total_paid - amount_due;
+            console.log(balance);
+            $('#balance_due').html(balance.toFixed(2));
+
+        }
+
+        function order_details(){
+            var sum = "";
+
+            $(".product_info").each(function () {
+                var product_info = $(this).text().slice(1, );
+                
+                if (!isNaN(product_info) && product_info.length !== 0) {
+                    sum += product_info + ", ";
+                }
+                console.log(sum)
+                
+            });
+
+            $('#dorder').html(sum);
+            
+        }
+
+
+
+        function calculate() {
+
+            order_details();
+            calculate_lines();
+            calculate_sub();
+            calculate_tax();
+            calculate_dw();
+            calculate_total();
+            paid_total();
+            total_due_to_sdn();
+
+        }
+        calculate();
+
+        $('#invoice').on('keyup', function () {
+            calculate();
+        });
+
+
+
+
+        $(".removeRow").click(function () {
+
+            setTimeout(function () {
+                calculate();
+            }, 200);
+
+        });
+
+
+        $('#answer-example-share-button').on('click', () => {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Web Share API Draft',
+                    text: get_content(),
+                    html: document.getElementById("receipt").innerHTML,
+                    // url: 'https://wicg.github.io/web-share/#share-method',
+                })
+                    .then(() => console.log('Successful share'))
+                    .catch((error) => console.log('Error sharing', error));
+            } else {
+                console.log('Share not supported on this browser, do it the old way.');
+            }
+        });
+        function get_content() {
+            var html = document.getElementById("receipt").innerText;
+             return html.replace("+ NEW ROW", "").replace(/Payment History/g, '\n Payment History').replace(/Total Paid/g , "\n Total Paid ").replace(/Thank you!/g , "\n Thank you!").replace(/Receipt By Address\nPrint Share!\nDownload/g , "");
+        }
+    </script>
+</body>
+
+</html>
